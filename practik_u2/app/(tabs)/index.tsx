@@ -1,98 +1,169 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import {useForm, Controller} from 'react-hook-form';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import {ILoginType} from "@/types/login/ILoginType";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {LoginSchema} from "@/schemas/LoginSchema";
 
 export default function HomeScreen() {
+  const defaultValues : ILoginType = {
+    email: "",
+    password: ""
+  }
+  const {
+    control,
+    handleSubmit,
+    // reset,
+    formState: {errors},
+  } = useForm<ILoginType>({
+    resolver: zodResolver(LoginSchema),
+    defaultValues: defaultValues,
+  });
+
+  const myOnSubmit = (data: ILoginType) => {
+    console.log("Login user in Form", data);
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+        <SafeAreaView className="flex-1 bg-[#121212]">
+            <KeyboardAvoidingView
+                className="flex-1"
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            >
+                <ScrollView
+                    className="flex-1"
+                    contentContainerClassName="flex-grow justify-center px-6 py-10"
+                    keyboardShouldPersistTaps="handled"
+                >
+                    {/* Logo */}
+                    <View className="mb-10 items-center">
+                        <View className="mb-5 h-20 w-20 items-center justify-center rounded-full bg-[#ff5500]">
+                            <Text className="text-3xl font-bold text-white">
+                                M
+                            </Text>
+                        </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+                        <Text className="text-3xl font-bold text-white">
+                            My Awesome App
+                        </Text>
+
+                        <Text className="mt-2 text-center text-sm text-gray-400">
+                            Sign in to continue listening
+                        </Text>
+                    </View>
+
+                    {/* Login / Register switch */}
+                    <View className="mb-7 flex-row rounded-xl bg-[#242424] p-1">
+                        <Pressable
+                            onPress={() => console.log("To login")}
+                            className={`flex-1 items-center rounded-lg py-3 bg-[#ff5500]`}
+                        >
+                            <Text
+                                className={`font-semibold text-white`}
+                            >
+                                Login
+                            </Text>
+                        </Pressable>
+
+                        <Pressable
+                            onPress={() => console.log("To register")}
+                            className={`flex-1 items-center rounded-lg py-3 bg-transparent`}
+                        >
+                            <Text
+                                className={`font-semibold text-white`}
+                            >
+                                Register
+                            </Text>
+                        </Pressable>
+                    </View>
+
+                    {/* Form */}
+                    <View className="rounded-2xl bg-[#1c1c1c] p-5">
+                        {/* Email */}
+                        <View className="mb-5">
+                            <Text className="mb-2 text-sm font-medium text-gray-300">
+                                Електронна пошта
+                            </Text>
+
+                          <Controller
+                              control={control}
+                              name="email"
+                              render={({ field: { onChange, onBlur, value } }) => (
+                                  <TextInput
+                                      value={value}
+                                      onChangeText={onChange}
+                                      onBlur={onBlur}
+                                      placeholder="Enter your email"
+                                      placeholderTextColor="#777"
+                                      keyboardType="email-address"
+                                      autoCapitalize="none"
+                                      className="rounded-xl border border-[#333] bg-[#242424] px-4 py-4 text-base text-white"
+                                  />
+                              )}
+                          />
+                          {errors.email && (
+                              <Text className="mt-1 text-xs text-red-500">{errors.email.message}</Text>
+                          )}
+                        </View>
+
+                        {/* Password */}
+                        <View className="mb-6">
+                            <Text className="mb-2 text-sm font-medium text-gray-300">
+                                Пароль
+                            </Text>
+
+                          <Controller
+                              control={control}
+                              name="password"
+                              render={({ field: { onChange, onBlur, value } }) => (
+                                  <TextInput
+                                      value={value}
+                                      onChangeText={onChange}
+                                      onBlur={onBlur}
+                                      placeholder="Enter your password"
+                                      placeholderTextColor="#777"
+                                      secureTextEntry
+                                      className="rounded-xl border border-[#333] bg-[#242424] px-4 py-4 text-base text-white"
+                                  />
+                              )}
+                          />
+                          {errors.password && (
+                              <Text className="mt-1 text-xs text-red-500">{errors.password.message}</Text>
+                          )}
+                        </View>
+
+                        <Pressable className="mb-6 self-end">
+                            <Text className="text-sm font-medium text-[#ff5500]">
+                                Відновити пароль?
+                            </Text>
+                        </Pressable>
+
+
+                        {/* Submit */}
+                        <Pressable
+                            onPress={handleSubmit(myOnSubmit)}
+                            className="items-center rounded-xl bg-[#ff5500] py-4 active:opacity-80"
+                        >
+                            <Text className="text-base font-bold text-white">
+                                Sign In
+                            </Text>
+                        </Pressable>
+                    </View>
+
+                    {/* Bottom text */}
+                    <View className="mt-7 flex-row justify-center">
+                        <Text className="text-sm text-gray-400">
+                            Don't have an account?
+                        </Text>
+
+                        <Pressable onPress={() => console.log("To register")}>
+                            <Text className="text-sm font-bold text-[#ff5500]">
+                                Register
+                            </Text>
+                        </Pressable>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
+    );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
