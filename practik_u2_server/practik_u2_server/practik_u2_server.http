@@ -1,0 +1,6 @@
+@practik_u2_server_HostAddress = http://localhost:5117
+
+GET {{practik_u2_server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
