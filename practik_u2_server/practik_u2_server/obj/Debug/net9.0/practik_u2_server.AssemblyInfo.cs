@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("practik_u2_server")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b82608cc85644d18a0b36639851ee7c3dbc293c2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+14944d853430b76de3873647f137d763ceca1766")]
 [assembly: System.Reflection.AssemblyProductAttribute("practik_u2_server")]
 [assembly: System.Reflection.AssemblyTitleAttribute("practik_u2_server")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
