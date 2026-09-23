@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using practik_u2_server.Data;
 using practik_u2_server.Data.Entities;
 using practik_u2_server.Extensions;
+using practik_u2_server.Interfaces;
+using practik_u2_server.Services;
 
 namespace practik_u2_server
 {
@@ -27,6 +29,8 @@ namespace practik_u2_server
                 options.Password.RequiredLength = 6;
                 options.Password.RequiredUniqueChars = 1;
             }).AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
+
+            builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
