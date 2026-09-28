@@ -1,12 +1,13 @@
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import {useForm, Controller} from 'react-hook-form';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import {ILoginType} from "@/types/login/ILoginType";
-import {zodResolver} from "@hookform/resolvers/zod";
-import {LoginSchema} from "@/schemas/LoginSchema";
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { useForm, Controller } from 'react-hook-form'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { ILoginType } from "@/types/login/ILoginType"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { LoginSchema } from "@/schemas/LoginSchema"
+import { router } from "expo-router"
 import axios from "axios"
 
-export default function HomeScreen() {
+export default function LoginScreen() {
   const defaultValues : ILoginType = {
     email: "",
     password: ""
@@ -21,13 +22,13 @@ export default function HomeScreen() {
     defaultValues: defaultValues,
   });
 
-  const url = "https://webpd411.itstep.click/api/account/login";
+  const url = "https://webpd411.itstep.click/api/account/login"
 
-  const myOnSubmit = async (data: ILoginType) => {
-    console.log("Login user in Form", data);
+  const onSubmit = async (data: ILoginType) => {
+    console.log("Login user in Form", data)
     try {
         const result = await axios.post(url, data)
-        console.log("Login user in Form", result);
+        console.log("Login user in Form", result)
     }
     catch (e) {
         console.error("Login request error", e)
@@ -76,7 +77,7 @@ export default function HomeScreen() {
                         </Pressable>
 
                         <Pressable
-                            onPress={() => console.log("To register")}
+                            onPress={() => router.replace("/explore")}
                             className={`flex-1 items-center rounded-lg py-3 bg-transparent`}
                         >
                             <Text
@@ -151,7 +152,7 @@ export default function HomeScreen() {
 
                         {/* Submit */}
                         <Pressable
-                            onPress={handleSubmit(myOnSubmit)}
+                            onPress={handleSubmit(onSubmit)}
                             className="items-center rounded-xl bg-[#ff5500] py-4 active:opacity-80"
                         >
                             <Text className="text-base font-bold text-white">
