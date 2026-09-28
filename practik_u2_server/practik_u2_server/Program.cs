@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using practik_u2_server.Data;
 using practik_u2_server.Data.Entities;
 using practik_u2_server.Extensions;
@@ -31,12 +32,30 @@ namespace practik_u2_server
             }).AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
 
             builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+            builder.Services.AddScoped<IImageService, ImageOptimizationService>();
 
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
+
+            try
+            {
+                var myImage = builder.Configuration.GetRequiredSection("ImagesDir").Get<string>() ?? "myimages";
+                string path = Path.Combine(Directory.GetCurrentDirectory(), myImage);
+                Directory.CreateDirectory(path); //автоматично стоврить images
+
+                app.UseStaticFiles(new StaticFileOptions
+                {
+                    FileProvider = new PhysicalFileProvider(path),
+                    RequestPath = $"/{myImage}"
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Помилка запуску" + ex.Message);
+            }
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
