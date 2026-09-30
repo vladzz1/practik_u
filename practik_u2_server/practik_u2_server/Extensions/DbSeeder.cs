@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using practik_u2_server.Constants;
 using practik_u2_server.Data;
 using practik_u2_server.Data.Entities;
+using practik_u2_server.Interfaces;
 using practik_u2_server.Models.Seeder;
 using System.Text;
 using System.Text.Json;
@@ -18,6 +19,7 @@ namespace practik_u2_server.Extensions
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<RoleEntity>>();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<UserEntity>>();
+            var imageService = scope.ServiceProvider.GetRequiredService<IImageService>();
 
             context.Database.Migrate();
 
@@ -46,9 +48,10 @@ namespace practik_u2_server.Extensions
                                 FirstName = user.FirstName,
                                 LastName = user.LastName,
                                 Email = user.Email,
-                                UserName = user.Email,
-                                Image = user.Image,
+                                UserName = user.Email
                             };
+                            if (!string.IsNullOrEmpty(user.Image))
+                                entity.Image = await imageService.SaveImageFromUrlAsync(user.Image);
                             var result = await userManager.CreateAsync(entity, user.Password);
                             if (result.Succeeded)
                             {

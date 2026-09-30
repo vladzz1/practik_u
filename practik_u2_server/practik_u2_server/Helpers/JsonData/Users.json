@@ -3,7 +3,7 @@
     "Email": "admin@gmail.com",
     "FirstName": "Адмін",
     "LastName": "Системний",
-    "Image": "default.jpg",
+    "Image": "https://i.pravatar.cc/1200",
     "Roles": [ "admin" ],
     "Password": "Admin123!"
   },
@@ -11,7 +11,7 @@
     "Email": "user@gmail.com",
     "FirstName": "Іван",
     "LastName": "Зібров",
-    "Image": "default.jpg",
+    "Image": "https://i.pravatar.cc/1200",
     "Roles": [ "user" ],
     "Password": "User123!"
   }
