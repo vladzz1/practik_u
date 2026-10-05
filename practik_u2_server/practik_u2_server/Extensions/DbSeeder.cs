@@ -12,6 +12,9 @@ namespace practik_u2_server.Extensions
 {
     public static class DbSeeder
     {
+        // Початкові значення довідників
+        private static readonly string[] TaskStatuses = ["До виконання", "В процесі", "Виконано", "Скасовано"];
+        private static readonly string[] TaskPriorities = ["Низький", "Середній", "Високий", "Терміновий"];
         public static async Task SeedData(this WebApplication webApplication)
         {
             using var scope = webApplication.Services.CreateScope();
@@ -66,6 +69,66 @@ namespace practik_u2_server.Extensions
                     catch (Exception ex)
                     {
                         Console.WriteLine("Викникла помилка при Seed Users ", ex.Message);
+                    }
+                }
+            }
+            // Довідник статусів
+            if (!await context.TaskStatuses.AnyAsync())
+            {
+                context.TaskStatuses.AddRange(TaskStatuses.Select(name => new TaskStatusEntity{ Name = name }));
+                await context.SaveChangesAsync();
+            }
+
+            // Довідник пріоритетів
+            if (!await context.TaskPriorities.AnyAsync())
+            {
+                context.TaskPriorities.AddRange(TaskPriorities.Select(name => new TaskPriorityEntity { Name = name }));
+                await context.SaveChangesAsync();
+            }
+
+            // Задачі (IgnoreQueryFilters, щоб м'яко видалені задачі теж враховувались)
+            if (!await context.Tasks.IgnoreQueryFilters().AnyAsync())
+            {
+                var jsonFile = Path.Combine(Directory.GetCurrentDirectory(), "Helpers", "JsonData", "Tasks.json");
+                if (File.Exists(jsonFile))
+                {
+                    try
+                    {
+                        var jsonData = await File.ReadAllTextAsync(jsonFile, Encoding.UTF8);
+                        var tasks = JsonSerializer.Deserialize<List<SeederTaskModel>>(jsonData);
+
+                        // Словники для швидкого пошуку Id за назвою / email
+                        var statuses = await context.TaskStatuses.ToDictionaryAsync(s => s.Name, s => s.Id);
+                        var priorities = await context.TaskPriorities.ToDictionaryAsync(p => p.Name, p => p.Id);
+                        var usersByEmail = await context.Users.Where(u => u.Email != null).ToDictionaryAsync(u => u.Email!, u => u.Id);
+
+                        foreach (var task in tasks ?? [])
+                        {
+                            if (!usersByEmail.TryGetValue(task.UserEmail, out var userId) || !statuses.TryGetValue(task.Status, out var statusId) || !priorities.TryGetValue(task.Priority, out var priorityId))
+                            {
+                                Console.WriteLine($"Пропущено задачу '{task.Title}': не знайдено користувача, статус або пріоритет.");
+                                continue;
+                            }
+
+                            context.Tasks.Add(new TaskEntity
+                            {
+                                Title = task.Title,
+                                Description = task.Description,
+                                DueDate = task.DueDate,
+                                CompletedAt = task.CompletedAt,
+                                IsDeleted = task.IsDeleted,
+                                DeletedAt = task.DeletedAt,
+                                UserId = userId,
+                                StatusId = statusId,
+                                PriorityId = priorityId
+                            });
+                        }
+
+                        await context.SaveChangesAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Виникла помилка при Seed Tasks: {ex.Message}");
                     }
                 }
             }

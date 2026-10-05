@@ -12,5 +12,6 @@ namespace practik_u2_server.Data.Entities
         [StringLength(100)]
         public string? Image { get; set; }
         public ICollection<UserRoleEntity>? UserRoles { get; set; }
+        public ICollection<TaskEntity>? Tasks { get; set; }
     }
 }
