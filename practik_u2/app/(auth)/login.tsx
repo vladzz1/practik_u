@@ -1,41 +1,40 @@
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
-import { useForm, Controller } from 'react-hook-form'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { ILoginType } from "@/types/login/ILoginType"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { LoginSchema } from "@/schemas/LoginSchema"
-import { router } from "expo-router"
+import {useForm, Controller} from 'react-hook-form'
+import {SafeAreaView} from 'react-native-safe-area-context'
+import {ILoginType} from "@/types/login/ILoginType"
+import {zodResolver} from "@hookform/resolvers/zod"
+import {LoginSchema} from "@/schemas/LoginSchema"
+import {router} from "expo-router"
 import axios from "axios"
 
 export default function LoginScreen() {
-  const defaultValues : ILoginType = {
-    email: "",
-    password: ""
-  }
-  const {
-    control,
-    handleSubmit,
-    // reset,
-    formState: {errors},
-  } = useForm<ILoginType>({
-    resolver: zodResolver(LoginSchema),
-    defaultValues: defaultValues,
-  });
-
-  const url = "https://webpd411.itstep.click/api/account/login"
-
-  const onSubmit = async (data: ILoginType) => {
-    console.log("Login user in Form", data)
-    try {
-        const result = await axios.post(url, data)
-        console.log("Login user in Form", result)
+    const defaultValues: ILoginType = {
+        email: '',
+        password: '',
     }
-    catch (e) {
-        console.error("Login request error", e)
-    }
-  };
+    const {
+        control,
+        handleSubmit,
+        // reset,
+        formState: {errors},
+    } = useForm<ILoginType>({
+        resolver: zodResolver(LoginSchema),
+        defaultValues: defaultValues,
+    });
 
-  return (
+    const url = "https://webpd411.itstep.click/api/account/login";
+
+    const myOnSubmit = async (data: ILoginType) => {
+        console.log("Login user in Form", data);
+        try {
+            const result = await axios.post(url, data);
+            console.log("Login user in Form", result.data);
+        } catch (e) {
+            console.log("Login request error", e);
+        }
+    };
+
+    return (
         <SafeAreaView className="flex-1 bg-[#121212]">
             <KeyboardAvoidingView
                 className="flex-1"
@@ -77,7 +76,7 @@ export default function LoginScreen() {
                         </Pressable>
 
                         <Pressable
-                            onPress={() => router.replace("/explore")}
+                            onPress={() => router.replace("/register")}
                             className={`flex-1 items-center rounded-lg py-3 bg-transparent`}
                         >
                             <Text
@@ -96,26 +95,28 @@ export default function LoginScreen() {
                                 Електронна пошта
                             </Text>
 
-                          <Controller
-                              control={control}
-                              name="email"
-                              render={({ field: { onChange, onBlur, value } }) => (
-                                  <TextInput
-                                      value={value}
-                                      onChangeText={onChange}
-                                      onBlur={onBlur}
-                                      placeholder="Enter your email"
-                                      placeholderTextColor="#777"
-                                      keyboardType="email-address"
-                                      autoCapitalize="none"
-                                      className="rounded-xl border border-[#333] bg-[#242424] px-4 py-4 text-base text-white"
-                                  />
-                              )}
-                          />
-                          {errors.email && (
-                              <Text className="mt-1 text-xs text-red-500">{errors.email.message}</Text>
-                          )}
+                            <Controller
+                                control={control}
+                                name="email"
+                                render={({ field: { onChange, onBlur, value } }) => (
+                                    <TextInput
+                                        value={value}
+                                        onChangeText={onChange}
+                                        onBlur={onBlur}
+                                        placeholder="Enter your email"
+                                        placeholderTextColor="#777"
+                                        keyboardType="email-address"
+                                        autoCapitalize="none"
+                                        className="rounded-xl border border-[#333] bg-[#242424] px-4 py-4 text-base text-white"
+                                    />
+                                )}
+                            />
+                            {errors.email && (
+                                <Text className="mt-1 text-xs text-red-500">{errors.email.message}</Text>
+                            )}
                         </View>
+
+
 
                         {/* Password */}
                         <View className="mb-6">
@@ -123,24 +124,24 @@ export default function LoginScreen() {
                                 Пароль
                             </Text>
 
-                          <Controller
-                              control={control}
-                              name="password"
-                              render={({ field: { onChange, onBlur, value } }) => (
-                                  <TextInput
-                                      value={value}
-                                      onChangeText={onChange}
-                                      onBlur={onBlur}
-                                      placeholder="Enter your password"
-                                      placeholderTextColor="#777"
-                                      secureTextEntry
-                                      className="rounded-xl border border-[#333] bg-[#242424] px-4 py-4 text-base text-white"
-                                  />
-                              )}
-                          />
-                          {errors.password && (
-                              <Text className="mt-1 text-xs text-red-500">{errors.password.message}</Text>
-                          )}
+                            <Controller
+                                control={control}
+                                name="password"
+                                render={({ field: { onChange, onBlur, value } }) => (
+                                    <TextInput
+                                        value={value}
+                                        onChangeText={onChange}
+                                        onBlur={onBlur}
+                                        placeholder="Enter your password"
+                                        placeholderTextColor="#777"
+                                        secureTextEntry
+                                        className="rounded-xl border border-[#333] bg-[#242424] px-4 py-4 text-base text-white"
+                                    />
+                                )}
+                            />
+                            {errors.password && (
+                                <Text className="mt-1 text-xs text-red-500">{errors.password.message}</Text>
+                            )}
                         </View>
 
                         <Pressable className="mb-6 self-end">
@@ -152,7 +153,7 @@ export default function LoginScreen() {
 
                         {/* Submit */}
                         <Pressable
-                            onPress={handleSubmit(onSubmit)}
+                            onPress={handleSubmit(myOnSubmit)}
                             className="items-center rounded-xl bg-[#ff5500] py-4 active:opacity-80"
                         >
                             <Text className="text-base font-bold text-white">
