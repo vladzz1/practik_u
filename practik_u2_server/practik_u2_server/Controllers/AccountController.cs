@@ -24,7 +24,7 @@ namespace practik_u2_server.Controllers
             }
             return Unauthorized("Не вірно вказані дані");
         }
-        [HttpPost]
+        [HttpPost("register")]
         public async Task<IActionResult> Register([FromForm] RegisterModel model)
         {
             try
@@ -59,7 +59,7 @@ namespace practik_u2_server.Controllers
             }
         }
         [Authorize]
-        [HttpGet]
+        [HttpGet("profile")]
         public async Task<IActionResult> Profile()
         {
             var email = User.FindFirstValue(ClaimTypes.Email) ?? User.FindFirstValue("email");
