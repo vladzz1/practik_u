@@ -1,196 +1,216 @@
-import {useState} from 'react';
-import {Pressable, ScrollView, Text, TextInput, View} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {router} from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, RefreshControl, SafeAreaView, ScrollView, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
 
-type Track = {
-    id: string;
+interface TaskModel {
+    id: number;
     title: string;
-    artist: string;
-    duration: string;
-    color: string;
+    description: string | null;
+    createdAt: string;
+    updatedAt: string | null;
+    dueDate: string | null;
+    completedAt: string | null;
+    statusId: number;
+    status: string;
+    priorityId: number;
+    priority: string;
+}
+
+const url = 'https://webpd411.itstep.click/api/Tasks';
+
+const DONE_STATUS_ID = 3;
+
+const priorityColors: Record<number, string> = {
+    1: '#10b981', // низький
+    2: '#f59e0b', // середній
+    3: '#ef4444', // високий
 };
 
-const recent: Track[] = [
-    {id: '1', title: 'Нічний драйв', artist: 'Lumen', duration: '3:42', color: '#ff5500'},
-    {id: '2', title: 'Тиша', artist: 'Okean', duration: '4:10', color: '#3b82f6'},
-    {id: '3', title: 'Весна', artist: 'Dakh', duration: '2:58', color: '#10b981'},
-    {id: '4', title: 'Хвилі', artist: 'Nova', duration: '3:25', color: '#a855f7'},
-];
+const statusColors: Record<number, string> = {
+    1: '#3b82f6',
+    2: '#f59e0b',
+    3: '#10b981',
+};
 
-const playlists = [
-    {id: 'p1', title: 'Ранковий настрій', count: 24, color: '#f59e0b'},
-    {id: 'p2', title: 'Фокус', count: 31, color: '#06b6d4'},
-    {id: 'p3', title: 'Спорт', count: 18, color: '#ef4444'},
-    {id: 'p4', title: 'Вечір', count: 27, color: '#8b5cf6'},
-];
+const formatDate = (value?: string | null) => {
+    if (!value) return null;
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? null : d.toLocaleDateString('uk-UA');
+};
 
-const forYou: Track[] = [
-    {id: '5', title: 'Містами', artist: 'Lumen', duration: '3:12', color: '#ec4899'},
-    {id: '6', title: 'Світанок', artist: 'Okean', duration: '4:01', color: '#14b8a6'},
-    {id: '7', title: 'Дорога додому', artist: 'Dakh', duration: '3:36', color: '#f97316'},
-    {id: '8', title: 'Інший берег', artist: 'Nova', duration: '2:49', color: '#6366f1'},
-];
+export default function TasksScreen() {
+    const [tasks, setTasks] = useState<TaskModel[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [refreshing, setRefreshing] = useState<boolean>(false);
 
-export default function HomeScreen() {
-    const [query, setQuery] = useState('');
-    const [current, setCurrent] = useState<Track>(recent[0]);
-    const [playing, setPlaying] = useState(false);
+    const fetchTasks = useCallback(async () => {
+        try {
+            const token = await SecureStore.getItemAsync('userToken');
 
-    const play = (track: Track) => {
-        setCurrent(track);
-        setPlaying(true);
+            if (!token) {
+                router.replace('/login');
+                return;
+            }
+
+            const response = await axios.get<TaskModel[]>(url, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setTasks(response.data);
+        } catch (error: any) {
+            console.error('Помилка завантаження задач:', error);
+
+            if (error.response?.status === 401) {
+                await SecureStore.deleteItemAsync('userToken');
+                router.replace('/login');
+            } else {
+                Alert.alert('Помилка', 'Не вдалося завантажити список задач.');
+            }
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchTasks();
+    }, [fetchTasks]);
+
+    const onRefresh = () => {
+        setRefreshing(true);
+        fetchTasks();
     };
 
-    const filteredForYou = forYou.filter(
-        (t) =>
-            t.title.toLowerCase().includes(query.toLowerCase()) ||
-            t.artist.toLowerCase().includes(query.toLowerCase()),
-    );
+    if (loading) {
+        return (
+            <SafeAreaView className="flex-1 bg-[#121212] justify-center items-center">
+                <ActivityIndicator size="large" color="#ff5500" />
+            </SafeAreaView>
+        );
+    }
+
+    const isDone = (t: TaskModel) => t.statusId === DONE_STATUS_ID || !!t.completedAt;
+    const isOverdue = (t: TaskModel) =>
+        !isDone(t) && !!t.dueDate && new Date(t.dueDate).getTime() < Date.now();
+
+    const doneCount = tasks.filter(isDone).length;
 
     return (
-        <SafeAreaView className="flex-1 bg-[#121212]" edges={['top']}>
+        <SafeAreaView className="flex-1 bg-[#121212]">
             <ScrollView
                 className="flex-1"
-                contentContainerClassName="px-6 pt-4 pb-32"
+                contentContainerClassName="px-6 py-10"
                 showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        tintColor="#ff5500"
+                    />
+                }
             >
-                {/* Header */}
-                <View className="mb-6 flex-row items-center justify-between">
-                    <View>
-                        <Text className="text-sm text-gray-400">Вітаємо знову</Text>
-                        <Text className="text-3xl font-bold text-white">Що слухаємо?</Text>
-                    </View>
+                <Text className="text-2xl font-bold text-white mb-2">Мої задачі</Text>
+                <Text className="text-sm text-gray-400 mb-8">
+                    Виконано {doneCount} з {tasks.length}
+                </Text>
 
-                    <Pressable
-                        onPress={() => router.replace('/login')}
-                        className="h-12 w-12 items-center justify-center rounded-full bg-[#ff5500] active:opacity-80"
-                    >
-                        <Text className="text-lg font-bold text-white">M</Text>
-                    </Pressable>
-                </View>
-
-                {/* Search */}
-                <TextInput
-                    value={query}
-                    onChangeText={setQuery}
-                    placeholder="Пошук треків та виконавців"
-                    placeholderTextColor="#777"
-                    className="mb-8 rounded-xl border border-[#333] bg-[#242424] px-4 py-4 text-base text-white"
-                />
-
-                {/* Recent */}
-                <Text className="mb-4 text-xl font-bold text-white">Нещодавно</Text>
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    className="mb-8 -mx-6"
-                    contentContainerClassName="px-6 gap-4"
-                >
-                    {recent.map((track) => (
-                        <Pressable
-                            key={track.id}
-                            onPress={() => play(track)}
-                            className="w-36 active:opacity-80"
-                        >
-                            <View
-                                className="mb-3 h-36 w-36 items-end justify-end rounded-2xl p-3"
-                                style={{backgroundColor: track.color}}
-                            >
-                                <View className="h-9 w-9 items-center justify-center rounded-full bg-black/40">
-                                    <Text className="text-xs text-white">▶</Text>
-                                </View>
-                            </View>
-                            <Text className="font-semibold text-white" numberOfLines={1}>
-                                {track.title}
-                            </Text>
-                            <Text className="text-xs text-gray-400" numberOfLines={1}>
-                                {track.artist}
-                            </Text>
-                        </Pressable>
-                    ))}
-                </ScrollView>
-
-                {/* Playlists */}
-                <Text className="mb-4 text-xl font-bold text-white">Плейлисти</Text>
-                <View className="mb-8 flex-row flex-wrap justify-between">
-                    {playlists.map((p) => (
-                        <Pressable
-                            key={p.id}
-                            onPress={() => console.log('Open playlist', p.id)}
-                            className="mb-4 w-[48%] overflow-hidden rounded-2xl bg-[#1c1c1c] active:opacity-80"
-                        >
-                            <View className="h-24" style={{backgroundColor: p.color}} />
-                            <View className="p-3">
-                                <Text className="font-semibold text-white" numberOfLines={1}>
-                                    {p.title}
-                                </Text>
-                                <Text className="text-xs text-gray-400">{p.count} треків</Text>
-                            </View>
-                        </Pressable>
-                    ))}
-                </View>
-
-                {/* For you */}
-                <Text className="mb-4 text-xl font-bold text-white">Для тебе</Text>
-                <View className="rounded-2xl bg-[#1c1c1c] p-2">
-                    {filteredForYou.length === 0 && (
-                        <Text className="p-4 text-center text-sm text-gray-400">
-                            Нічого не знайдено. Спробуй інший запит.
+                {tasks.length === 0 ? (
+                    <View className="rounded-2xl bg-[#1c1c1c] p-6 border border-[#242424] items-center">
+                        <Text className="text-base font-semibold text-white mb-1">
+                            Задач поки немає
                         </Text>
-                    )}
-                    {filteredForYou.map((track) => {
-                        const active = current.id === track.id;
-                        return (
-                            <Pressable
-                                key={track.id}
-                                onPress={() => play(track)}
-                                className="flex-row items-center rounded-xl p-3 active:bg-[#242424]"
-                            >
-                                <View
-                                    className="mr-4 h-12 w-12 rounded-lg"
-                                    style={{backgroundColor: track.color}}
-                                />
-                                <View className="flex-1">
-                                    <Text
-                                        className={`font-semibold ${active ? 'text-[#ff5500]' : 'text-white'}`}
-                                        numberOfLines={1}
-                                    >
-                                        {track.title}
-                                    </Text>
-                                    <Text className="text-xs text-gray-400" numberOfLines={1}>
-                                        {track.artist}
-                                    </Text>
-                                </View>
-                                <Text className="text-xs text-gray-400">{track.duration}</Text>
-                            </Pressable>
-                        );
-                    })}
-                </View>
-            </ScrollView>
+                        <Text className="text-sm text-gray-400 text-center">
+                            Потягніть вниз, щоб оновити список.
+                        </Text>
+                    </View>
+                ) : (
+                    tasks.map((task) => {
+                        const done = isDone(task);
+                        const overdue = isOverdue(task);
+                        const due = formatDate(task.dueDate);
+                        const completed = formatDate(task.completedAt);
+                        const priorityColor = priorityColors[task.priorityId] ?? '#777';
+                        const statusColor = statusColors[task.statusId] ?? '#777';
 
-            {/* Mini player */}
-            <View className="absolute bottom-6 left-4 right-4 flex-row items-center rounded-2xl border border-[#333] bg-[#242424] p-3">
-                <View
-                    className="mr-3 h-12 w-12 rounded-lg"
-                    style={{backgroundColor: current.color}}
-                />
-                <View className="flex-1">
-                    <Text className="font-semibold text-white" numberOfLines={1}>
-                        {current.title}
-                    </Text>
-                    <Text className="text-xs text-gray-400" numberOfLines={1}>
-                        {current.artist}
-                    </Text>
-                </View>
-                <Pressable
-                    onPress={() => setPlaying((p) => !p)}
-                    className="h-11 w-11 items-center justify-center rounded-full bg-[#ff5500] active:opacity-80"
-                >
-                    <Text className="text-base font-bold text-white">{playing ? '❚❚' : '▶'}</Text>
-                </Pressable>
-            </View>
+                        return (
+                            <View
+                                key={task.id}
+                                className="mb-4 rounded-2xl bg-[#1c1c1c] p-4 border border-[#242424]"
+                            >
+                                <View className="flex-row">
+                                    <View
+                                        className={`mr-4 mt-0.5 h-6 w-6 items-center justify-center rounded-full border-2 ${
+                                            done ? 'bg-[#ff5500] border-[#ff5500]' : 'border-[#333]'
+                                        }`}
+                                    >
+                                        {done && (
+                                            <Text className="text-xs font-bold text-white">✓</Text>
+                                        )}
+                                    </View>
+
+                                    <View className="flex-1">
+                                        <Text
+                                            className={`text-base font-semibold ${
+                                                done ? 'text-gray-500 line-through' : 'text-white'
+                                            }`}
+                                        >
+                                            {task.title}
+                                        </Text>
+
+                                        {!!task.description && (
+                                            <Text className="mt-1 text-sm text-gray-400">
+                                                {task.description}
+                                            </Text>
+                                        )}
+                                    </View>
+                                </View>
+
+                                <View className="mt-4 flex-row flex-wrap items-center gap-2">
+                                    <View
+                                        className="rounded-full px-3 py-1"
+                                        style={{ backgroundColor: statusColor + '26' }}
+                                    >
+                                        <Text
+                                            className="text-xs font-semibold"
+                                            style={{ color: statusColor }}
+                                        >
+                                            {task.status}
+                                        </Text>
+                                    </View>
+
+                                    <View
+                                        className="rounded-full px-3 py-1"
+                                        style={{ backgroundColor: priorityColor + '26' }}
+                                    >
+                                        <Text
+                                            className="text-xs font-semibold"
+                                            style={{ color: priorityColor }}
+                                        >
+                                            {task.priority}
+                                        </Text>
+                                    </View>
+
+                                    {done && completed ? (
+                                        <Text className="text-xs text-gray-500">
+                                            Завершено {completed}
+                                        </Text>
+                                    ) : due ? (
+                                        <Text
+                                            className={`text-xs ${
+                                                overdue ? 'text-red-500' : 'text-gray-500'
+                                            }`}
+                                        >
+                                            {overdue ? 'Прострочено · ' : 'До '}
+                                            {due}
+                                        </Text>
+                                    ) : null}
+                                </View>
+                            </View>
+                        );
+                    })
+                )}
+            </ScrollView>
         </SafeAreaView>
     );
 }

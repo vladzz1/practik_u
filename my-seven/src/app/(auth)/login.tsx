@@ -5,8 +5,8 @@ import {ILoginType} from "@/types/login/ILoginType";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {LoginSchema} from "@/schemas/LoginSchema";
 import {router} from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import axios from "axios";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
     const defaultValues: ILoginType = {
@@ -31,10 +31,10 @@ export default function LoginScreen() {
             const result = await axios.post(url, data);
             const token = result.data.token;
             if (token) {
-                await AsyncStorage.setItem('userToken', token);
+                await SecureStore.setItemAsync('userToken',  result.data.token);
 
-                console.log("Login user in Form", result.data);
-                router.replace("/profile")
+                //console.log("Login user in Form", result.data);
+                router.replace("/home")
             }
         } catch (e) {
             console.log("Login request error", e);

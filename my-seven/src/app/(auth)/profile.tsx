@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { SafeAreaView, View, Text, Image, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { router } from "expo-router";
 import axios from "axios";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from "expo-secure-store";
 
 interface ProfileModel {
     email: string;
@@ -22,7 +22,7 @@ export default function ProfileScreen() {
             try {
                 setLoading(true);
 
-                const token = await AsyncStorage.getItem('userToken');
+                const token = await SecureStore.getItemAsync('userToken');
 
                 if (!token) {
                     router.replace('/login');
@@ -40,7 +40,7 @@ export default function ProfileScreen() {
                 console.error("Помилка завантаження профілю:", error);
 
                 if (error.response?.status === 401) {
-                    await AsyncStorage.removeItem('userToken');
+                    await SecureStore.deleteItemAsync('userToken');
                     router.replace('/login');
                 } else {
                     Alert.alert("Помилка", "Не вдалося завантажити дані профілю.");
@@ -83,7 +83,7 @@ export default function ProfileScreen() {
                     <View className="mb-4 h-28 w-28 items-center justify-center rounded-full bg-[#1c1c1c] border-2 border-[#333] overflow-hidden">
                         {profile?.image ? (
                             <Image 
-                                source={{ uri: profile.image }} 
+                                source={{ uri: `https://webpd411.itstep.click/images/${profile.image}_1280.webp` }} 
                                 className="h-full w-full"
                                 resizeMode="cover"
                             />
@@ -136,7 +136,7 @@ export default function ProfileScreen() {
 
                     <Pressable
                         onPress={async () => {
-                            await AsyncStorage.removeItem('userToken')
+                            await SecureStore.deleteItemAsync('userToken')
                             router.replace("/login")
                         }}
                         className="items-center rounded-xl bg-transparent border border-[#333] py-4 active:bg-[#1c1c1c]"
