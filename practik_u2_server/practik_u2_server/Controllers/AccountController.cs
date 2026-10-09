@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using practik_u2_server.Constants;
+using practik_u2_server.Data;
 using practik_u2_server.Data.Entities;
 using practik_u2_server.Interfaces;
 using practik_u2_server.Models.Account;
@@ -11,8 +13,20 @@ namespace practik_u2_server.Controllers
 {
     [Route("api/account")]
     [ApiController]
-    public class AccountController(UserManager<UserEntity> userManager, IImageService imageService, IJwtTokenService jwtTokenService) : ControllerBase
+    public class AccountController(UserManager<UserEntity> userManager, AppDbContext context, IImageService imageService, IJwtTokenService jwtTokenService) : ControllerBase
     {
+        [HttpGet("users")]
+        public async Task<IActionResult> GetAll() 
+        {
+            var users = await context.Users.Select(x => new {
+                x.Id,
+                x.Email,
+                x.FirstName,
+                x.LastName,
+                x.Image
+            }).ToListAsync();
+            return Ok(users);
+        }
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
