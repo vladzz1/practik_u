@@ -7,6 +7,8 @@ import {IRegister} from "@/types/register/IRegister";
 import {router} from "expo-router";
 import * as ImagePicker from "expo-image-picker"
 import {ImagePickerButton} from "@/components/form/ImagePickerButton";
+import axios from "axios";
+import * as SecureStore from "expo-secure-store";
 
 export default function RegisterScreen() {
   const defaultValues: IRegister = {
@@ -59,13 +61,37 @@ export default function RegisterScreen() {
   const url = "https://webpd411.itstep.click/api/account/register";
 
   const myOnSubmit = async (data: IRegister) => {
-    console.log("Register user in Form", data);
-    // try {
-    //   const result = await axios.post(url, data);
-    //   console.log("Login user in Form", result);
-    // } catch (e) {
-    //   console.log("Login request error", e);
-    // }
+    //console.log("Register user in Form", data);
+    try {
+      const formData = new FormData();
+      
+      formData.append('FirstName', data.firstName);
+      formData.append('LastName', data.lastName);
+      formData.append('Email', data.email);
+      formData.append('Password', data.password);
+      formData.append('ConfirmPassword', data.confirmPassword);
+      if (data.imageFile) {
+        formData.append('ImageFile', {
+            uri: data.imageFile.uri,
+            name: data.imageFile.name || 'avatar.jpg',
+            type: data.imageFile.type || 'image/jpeg'
+        } as any);
+      }
+
+      const result = await axios.post(url, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      const token = result.data.token;
+      if (token) {
+        await SecureStore.setItemAsync('userToken',  result.data.token);
+        router.replace("/home")
+      }
+      //console.log("Login user in Form", result);
+    } catch (e) {
+      console.log("Register request error", e);
+    }
   };
 
   return (
@@ -293,12 +319,12 @@ export default function RegisterScreen() {
             {/* Bottom text */}
             <View className="mt-7 flex-row justify-center">
               <Text className="text-sm text-gray-400">
-                Don't have an account?
+                Do you already have an account?
               </Text>
 
-              <Pressable onPress={() => console.log("To register")}>
+              <Pressable onPress={() => router.replace("/login")}>
                 <Text className="text-sm font-bold text-[#ff5500]">
-                  Register
+                  Login
                 </Text>
               </Pressable>
             </View>

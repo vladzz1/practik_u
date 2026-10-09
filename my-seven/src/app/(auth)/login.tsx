@@ -175,7 +175,7 @@ export default function LoginScreen() {
                             Don't have an account?
                         </Text>
 
-                        <Pressable onPress={() => console.log("To register")}>
+                        <Pressable onPress={() => router.replace("/register")}>
                             <Text className="text-sm font-bold text-[#ff5500]">
                                 Register
                             </Text>
